@@ -35,6 +35,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Chaintable/pipeline/tracer"
 	"github.com/ava-labs/avalanchego/utils/timer/mockable"
 	"github.com/ava-labs/libevm/accounts"
 	"github.com/ava-labs/libevm/common"
@@ -242,6 +243,20 @@ func New(
 	if err := eth.precheckPopulateMissingTries(); err != nil {
 		return nil, err
 	}
+	if config.VMTraceCfg == nil {
+		log.Warn("VM tracing is disabled, no VM traces will be recorded")
+	} else {
+		log.Info("VM tracing enabled", "config", *config.VMTraceCfg)
+	}
+
+	if config.VMTraceCfg != nil {
+		t, err := tracer.NewPipelineTracer(*config.VMTraceCfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create tracer %+v: %v", *config.VMTraceCfg, err)
+		}
+		vmConfig.Tracer = t
+	}
+
 	eth.blockchain, err = core.NewBlockChain(chainDb, cacheConfig, config.Genesis, eth.engine, vmConfig, lastAcceptedHash, config.SkipUpgradeCheck)
 	if err != nil {
 		return nil, err

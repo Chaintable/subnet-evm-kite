@@ -45,6 +45,7 @@ require (
 require (
 	connectrpc.com/connect v1.18.1 // indirect
 	connectrpc.com/grpcreflect v1.3.0 // indirect
+	github.com/Chaintable/pipeline v0.0.63-libevm-v1.13.15-0.20251016142715-1bccf4f2ddb2-debank-2
 	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/StephenButtolph/canoto v0.17.2 // indirect
@@ -189,3 +190,9 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
+
+replace github.com/ava-labs/libevm => github.com/Chaintable/libevm v1.13.15-0.20251016142715-1bccf4f2ddb2-debank-1
+
+replace github.com/consensys/gnark-crypto => github.com/consensys/gnark-crypto v0.12.1
+
+replace github.com/crate-crypto/go-ipa => github.com/crate-crypto/go-ipa v0.0.0-20231025140028-3c0104f4b233
