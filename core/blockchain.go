@@ -471,6 +471,18 @@ func NewBlockChain(
 	// Create the state manager
 	bc.stateManager = NewTrieWriter(bc.triedb, cacheConfig)
 
+	if vmConfig.Tracer != nil {
+		if _, ok := vmConfig.Tracer.(*tracer.PipelineTracer); !ok {
+			log.Crit("vmConfig.Tracer must be a pipeline.Tracer")
+		} else {
+			bc.hooks = tracing.BuildHooks(vmConfig.Tracer.(*tracer.PipelineTracer))
+		}
+	}
+
+	if bc.hooks != nil && bc.hooks.OnBlockchainInit != nil {
+		bc.hooks.OnBlockchainInit(chainConfig)
+	}
+
 	// Re-generate current block state if it is missing
 	if err := bc.loadLastState(lastAcceptedHash); err != nil {
 		return nil, err
@@ -524,17 +536,6 @@ func NewBlockChain(
 		bc.txIndexer = newTxIndexer(bc.cacheConfig.TransactionHistory, bc)
 	}
 
-	if vmConfig.Tracer != nil {
-		if _, ok := vmConfig.Tracer.(*tracer.PipelineTracer); !ok {
-			log.Crit("vmConfig.Tracer must be a pipeline.Tracer")
-		} else {
-			bc.hooks = tracing.BuildHooks(vmConfig.Tracer.(*tracer.PipelineTracer))
-		}
-	}
-
-	if bc.hooks != nil && bc.hooks.OnBlockchainInit != nil {
-		bc.hooks.OnBlockchainInit(chainConfig)
-	}
 	if bc.hooks != nil && bc.hooks.OnGenesisBlock != nil {
 		if block := bc.CurrentBlock(); block.Number.Uint64() == 0 {
 			bc.hooks.OnGenesisBlock(bc.genesisBlock, genesis.Alloc)
@@ -1842,8 +1843,15 @@ func (bc *BlockChain) reprocessBlock(parent *types.Block, current *types.Block) 
 	statedb.StartPrefetcher("chain", extstate.WithConcurrentWorkers(bc.cacheConfig.TriePrefetcherParallelism))
 	defer statedb.StopPrefetcher()
 
+	if bc.hooks != nil && bc.hooks.OnBlockStart != nil {
+		bc.hooks.OnBlockStart(current)
+	}
 	// Process previously stored block
-	receipts, _, usedGas, err := bc.processor.Process(current, parent.Header(), statedb, vm.Config{})
+	receipts, _, usedGas, err := bc.processor.Process(current, parent.Header(), statedb, bc.vmConfig)
+	if bc.hooks != nil && bc.hooks.OnBlockEnd != nil {
+		bc.hooks.OnBlockEnd(err)
+	}
+
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to re-process block (%s: %d): %v", current.Hash().Hex(), current.NumberU64(), err)
 	}
