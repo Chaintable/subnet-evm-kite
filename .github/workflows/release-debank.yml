@@ -1,0 +1,62 @@
+name: "Release new artifacts"
+
+on:
+  release:
+    types:
+      - created
+  workflow_dispatch:
+
+env:
+  REGISTRY: 294354037686.dkr.ecr.ap-northeast-1.amazonaws.com
+  IMAGE: blockchain/kite-x
+  DOCKERFILE: Dockerfile.debank
+  AVALANCHE_VERSION: debank
+  AWS_REGION: ap-northeast-1
+
+jobs:
+  build-artifacts:
+    strategy:
+      matrix:
+        arch: [amd64]
+    runs-on: [self-hosted, "${{ matrix.arch }}"]
+    steps:
+      - name: Checkout subnet-evm-kite
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.RELEASE_MANAGER_APP_ID }}
+          private_key: ${{ secrets.RELEASE_MANAGER_APP_SECRET }}
+
+      - name: Set env
+        run: |
+          echo "REVISION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          file: ${{ env.DOCKERFILE }}
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ matrix.arch }}-${{ env.REVISION }}
+          build-args: |
+            ACCESS_TOKEN=${{ steps.generate-token.outputs.token }}
+            AVALANCHE_VERSION=${{ env.AVALANCHE_VERSION }}
+          provenance: false
+
+      - name: Lark Notification
+        continue-on-error: true
+        run: |
+          notiv3 "Blockchain kite-x latest image pushed" ${REGISTRY}/${IMAGE}:${{ matrix.arch }}-${REVISION}
