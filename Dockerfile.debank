@@ -1,0 +1,45 @@
+# syntax=docker/dockerfile:experimental
+
+ARG AVALANCHE_VERSION
+
+# ============= Stage 1: build avalanchego from avalanchego-x-kite =============
+FROM golang:1.24.9-bookworm AS avago-builder
+
+ARG ACCESS_TOKEN
+ARG AVALANCHE_VERSION
+
+RUN git config --global url."https://x-access-token:${ACCESS_TOKEN}@github.com".insteadOf "https://github.com"
+
+WORKDIR /build
+RUN git clone https://github.com/Chaintable/avalanchego-x-kite.git avalanchego && \
+    cd avalanchego && \
+    git checkout $AVALANCHE_VERSION
+
+WORKDIR /build/avalanchego
+RUN GOSUMDB=off go mod tidy && go mod download
+RUN ./scripts/build.sh
+
+# ============= Stage 2: build subnet-evm-kite plugin from current code =============
+FROM golang:1.24.9-bookworm AS plugin-builder
+
+ARG ACCESS_TOKEN
+
+RUN git config --global url."https://x-access-token:${ACCESS_TOKEN}@github.com".insteadOf "https://github.com"
+
+WORKDIR /build/subnet-evm
+COPY go.mod go.sum ./
+RUN GOSUMDB=off go mod download
+COPY . .
+RUN ./scripts/build.sh /build/subnet-evm-plugin
+
+# ============= Stage 3: assemble final image =============
+FROM ubuntu:24.04
+
+RUN apt-get update && apt-get install ca-certificates -y && update-ca-certificates
+
+RUN mkdir -p /avalanchego/build/plugins
+COPY --from=avago-builder /build/avalanchego/build/avalanchego /avalanchego/build/avalanchego
+COPY --from=plugin-builder /build/subnet-evm-plugin /avalanchego/build/plugins/pJhES6xZkqZxjxMqHiucbpBTTnB97EjL5aTYSynmWBoF26v9e
+
+WORKDIR /avalanchego/build
+CMD ["./avalanchego"]
