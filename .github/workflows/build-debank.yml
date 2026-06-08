@@ -1,4 +1,4 @@
-name: "Build new artifacts"
+name: "Build DeBank artifacts"
 
 on:
   pull_request:
@@ -7,31 +7,25 @@ on:
   workflow_dispatch:
 
 env:
+  AWS_REGION: ap-northeast-1
   REGISTRY: 294354037686.dkr.ecr.ap-northeast-1.amazonaws.com
   IMAGE: blockchain/kite-x
   DOCKERFILE: Dockerfile.debank
   AVALANCHE_VERSION: debank
-  AWS_REGION: ap-northeast-1
 
 jobs:
   build-artifacts:
     strategy:
       matrix:
-        arch: [amd64]
+        arch: [amd64, arm64]
     runs-on: [self-hosted, "${{ matrix.arch }}"]
     steps:
-      - name: Checkout subnet-evm-kite
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - uses: tibdex/github-app-token@v1
-        id: generate-token
-        with:
-          app_id: ${{ secrets.RELEASE_MANAGER_APP_ID }}
-          private_key: ${{ secrets.RELEASE_MANAGER_APP_SECRET }}
-
-      - name: Set env
+      - name: Set env (determine image tag)
         run: |
           echo "REVISION=$(git rev-parse --short=9 HEAD)" >> $GITHUB_ENV
 
@@ -44,7 +38,7 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build image
+      - name: Build and push image
         uses: docker/build-push-action@v6
         with:
           file: ${{ env.DOCKERFILE }}
@@ -52,11 +46,40 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ matrix.arch }}-${{ env.REVISION }}
           build-args: |
-            ACCESS_TOKEN=${{ steps.generate-token.outputs.token }}
             AVALANCHE_VERSION=${{ env.AVALANCHE_VERSION }}
           provenance: false
+
+  merge-docker-manifest:
+    runs-on: [self-hosted, general]
+    needs: build-artifacts
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set env (determine image tag)
+        run: |
+          echo "REVISION=$(git rev-parse --short=9 HEAD)" >> $GITHUB_ENV
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Merge manifest
+        run: |
+          docker pull --platform=linux/amd64 ${REGISTRY}/${IMAGE}:amd64-${REVISION}
+          docker pull --platform=linux/arm64 ${REGISTRY}/${IMAGE}:arm64-${REVISION}
+          docker buildx imagetools create --tag ${REGISTRY}/${IMAGE}:${REVISION} ${REGISTRY}/${IMAGE}:amd64-${REVISION} ${REGISTRY}/${IMAGE}:arm64-${REVISION}
+          docker rmi ${REGISTRY}/${IMAGE}:amd64-${REVISION}
+          docker rmi ${REGISTRY}/${IMAGE}:arm64-${REVISION}
 
       - name: Lark Notification
         continue-on-error: true
         run: |
-          notiv3 "Blockchain kite-x latest image pushed" ${REGISTRY}/${IMAGE}:${{ matrix.arch }}-${REVISION}
+          notiv3 "Blockchain kite-x pushed" ${REGISTRY}/${IMAGE}:${REVISION}
