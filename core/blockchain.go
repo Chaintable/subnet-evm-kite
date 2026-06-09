@@ -123,6 +123,7 @@ var (
 	lastAcceptedBlockBaseFeeGauge = metrics.NewRegisteredGauge("chain/block/fee/basefee", nil)
 	blockTotalFeesGauge           = metrics.NewRegisteredGauge("chain/block/fee/total", nil)
 	acceptedBlockGasUsedCounter   = metrics.GetOrRegisterCounter("chain/block/gas/used/accepted", nil)
+	headBlockGauge                = metrics.GetOrRegisterGauge("chain/head/block", nil)
 	badBlockCounter               = metrics.GetOrRegisterCounter("chain/block/bad/count", nil)
 
 	txUnindexTimer      = metrics.GetOrRegisterCounter("chain/txs/unindex", nil)
@@ -1159,6 +1160,7 @@ func (bc *BlockChain) Accept(block *types.Block) error {
 	bc.addAcceptorQueue(block)
 	acceptedBlockGasUsedCounter.Inc(int64(block.GasUsed()))
 	acceptedTxsCounter.Inc(int64(len(block.Transactions())))
+	headBlockGauge.Update(int64(block.NumberU64()))
 	if baseFee := block.BaseFee(); baseFee != nil {
 		lastAcceptedBlockBaseFeeGauge.Update(baseFee.Int64())
 	}
