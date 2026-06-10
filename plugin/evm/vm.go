@@ -82,7 +82,8 @@ import (
 	commonEng "github.com/ava-labs/avalanchego/snow/engine/common"
 	avalancheUtils "github.com/ava-labs/avalanchego/utils"
 	avajson "github.com/ava-labs/avalanchego/utils/json"
-	avalanchegoprometheus "github.com/ava-labs/avalanchego/vms/evm/metrics/prometheus"
+	// Vendored copy with the GaugeInfo export fix; see the package comment.
+	avalanchegoprometheus "github.com/ava-labs/subnet-evm/plugin/evm/metrics/prometheus"
 	ethparams "github.com/ava-labs/libevm/params"
 	subnetevmlog "github.com/ava-labs/subnet-evm/plugin/evm/log"
 	vmsync "github.com/ava-labs/subnet-evm/plugin/evm/sync"
