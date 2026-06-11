@@ -1,0 +1,121 @@
+name: "Release public image"
+
+on:
+  push:
+    tags:
+      - 'v*'
+  release:
+    types:
+      - created
+
+env:
+  REGISTRY: public.ecr.aws/b2h7a5c4/chaintable
+  IMAGE: kite-writer
+  DOCKERFILE: Dockerfile.debank
+  AVALANCHE_VERSION: debank
+
+jobs:
+  build:
+    name: build-${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+            arch: amd64
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: false
+          swap-storage: false
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set env (determine image tag + resolve avalanchego commit)
+        run: |
+          echo "REVISION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          # Resolve AVALANCHE_VERSION (a branch name) to its current commit SHA, so the
+          # Dockerfile's `git clone && git checkout` layer cache key changes whenever the
+          # avalanchego-x-kite debank branch moves. Without this, Docker reuses the cached
+          # clone and avalanchego changes never make it into the image.
+          echo "AVALANCHE_VERSION=$(git ls-remote https://github.com/Chaintable/avalanchego-x-kite.git ${{ env.AVALANCHE_VERSION }} | cut -f1)" >> $GITHUB_ENV
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Login to Public ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
+
+      - name: Build & Push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ env.DOCKERFILE }}
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.REVISION }}-${{ matrix.arch }}
+          build-args: |
+            AVALANCHE_VERSION=${{ env.AVALANCHE_VERSION }}
+          cache-from: type=gha,scope=build-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=build-${{ matrix.arch }}
+          provenance: false
+          sbom: false
+
+  manifest:
+    name: merge-manifest
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Set env (determine image tag)
+        run: echo "REVISION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Login to Public ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
+
+      - name: Create and push multi-arch manifest
+        run: |
+          docker buildx imagetools create \
+            -t ${REGISTRY}/${IMAGE}:${REVISION} \
+            -t ${REGISTRY}/${IMAGE}:latest \
+            ${REGISTRY}/${IMAGE}:${REVISION}-amd64 \
+            ${REGISTRY}/${IMAGE}:${REVISION}-arm64
