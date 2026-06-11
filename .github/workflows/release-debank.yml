@@ -5,6 +5,14 @@ on:
     types:
       - created
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Image tag for manual runs (e.g. v0.8.0-debank5)"
+        required: true
+      ref:
+        description: "Git ref to build (tag/branch/sha); empty = the dispatched ref"
+        required: false
+        default: ""
 
 env:
   AWS_REGION: us-east-1
@@ -26,11 +34,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.event.inputs.ref || github.ref }}
 
       - name: Set env (determine image tag + resolve avalanchego commit)
         run: |
-          echo "REVISION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          REVISION="${{ github.event.inputs.version }}"
+          [ -z "$REVISION" ] && REVISION=${GITHUB_REF#refs/*/}
+          echo "REVISION=$REVISION" >> $GITHUB_ENV
           # Resolve AVALANCHE_VERSION (a branch name) to its current commit SHA, so the
           # Dockerfile's `git clone && git checkout` layer cache key changes whenever the
           # avalanchego-x-kite debank branch moves. Without this, Docker reuses the cached
@@ -74,7 +84,9 @@ jobs:
 
       - name: Set env (determine image tag)
         run: |
-          echo "REVISION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          REVISION="${{ github.event.inputs.version }}"
+          [ -z "$REVISION" ] && REVISION=${GITHUB_REF#refs/*/}
+          echo "REVISION=$REVISION" >> $GITHUB_ENV
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
