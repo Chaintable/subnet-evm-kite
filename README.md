@@ -5,6 +5,20 @@
 [![CodeQL](https://github.com/ava-labs/subnet-evm/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/ava-labs/subnet-evm/actions/workflows/codeql-analysis.yml)
 [![License](https://img.shields.io/github/license/ava-labs/subnet-evm)](https://github.com/ava-labs/subnet-evm/blob/master/LICENSE)
 
+## Fork Notice
+
+This repository is a modified fork of [ava-labs/subnet-evm](https://github.com/ava-labs/subnet-evm), maintained by Chaintable to run the **kite** writer node in the DeBank nodex stack.
+
+- **Upstream:** https://github.com/ava-labs/subnet-evm
+- **Base version:** `v0.8.0`
+- **License:** LGPL-3.0 (inherited from upstream)
+- **Working branch:** `debank` — Chaintable/DeBank patches on top of the upstream base
+- **Published image:** `public.ecr.aws/b2h7a5c4/chaintable/kite-writer`
+- **Companion source fork:** [Chaintable/avalanchego-x-kite](https://github.com/Chaintable/avalanchego-x-kite) — the avalanchego build context cloned at image-build time; it does not publish a standalone image
+- **Modifications:** data-export / pipeline-integration patches for the DeBank nodex stack (diff the `debank` branch against `v0.8.0` for details)
+
+---
+
 [Avalanche](https://docs.avax.network/avalanche-l1s) is a network composed of multiple blockchains.
 Each blockchain is an instance of a Virtual Machine (VM), much like an object in an object-oriented language is an instance of a class.
 That is, the VM defines the behavior of the blockchain.
