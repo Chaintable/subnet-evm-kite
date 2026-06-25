@@ -1,8 +1,26 @@
+# Chaintable write node
+
+> Fork of [ava-labs/subnet-evm](https://github.com/ava-labs/subnet-evm), with Chaintable pipeline patches.
+
+## Architecture
+
+This repo runs the chain's execution layer with the [Chaintable pipeline](https://github.com/Chaintable/pipeline) tracer embedded. The tracer extracts block data — block headers, transactions, call traces, receipts, events, and state diffs — and ships it to **S3 + Kafka** (see pipeline's [architecture](https://github.com/Chaintable/pipeline/blob/main/docs/architecture.md)). Two consumption paths:
+
+- **Block headers + state diffs** → Kafka + S3 → [leafage-evm](https://github.com/Chaintable/leafage-evm): a lightweight EVM executor serving state queries (`eth_call`, `eth_estimateGas`, …), no P2P sync, no tx storage (see its [architecture](https://github.com/Chaintable/leafage-evm#architecture)).
+- **Block files** (transactions · call traces · receipts · events) → S3 → Chaintable's transaction/trace indexing pipeline.
+
+```
+Chaintable write node (this repo · producer, embeds pipeline tracer)
+        │
+        ├─ block headers + state diffs ──────────────────→ Kafka + S3 ─→ leafage-evm (EVM state queries)
+        │
+        └─ block files (tx · trace · receipts · events) ──→ S3 ─→ Chaintable indexing pipeline (tx/trace data)
+```
+
+---
+
 # Subnet EVM
 
-[![Releases](https://img.shields.io/github/v/tag/ava-labs/subnet-evm.svg?sort=semver)](https://github.com/ava-labs/subnet-evm/releases)
-[![CI](https://github.com/ava-labs/subnet-evm/actions/workflows/ci.yml/badge.svg)](https://github.com/ava-labs/subnet-evm/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/ava-labs/subnet-evm/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/ava-labs/subnet-evm/actions/workflows/codeql-analysis.yml)
 [![License](https://img.shields.io/github/license/ava-labs/subnet-evm)](https://github.com/ava-labs/subnet-evm/blob/master/LICENSE)
 
 ## Fork Notice
@@ -94,13 +112,13 @@ Download the `subnet-evm` repository into your `$GOPATH`:
 
 ```sh
 cd $GOPATH
-mkdir -p src/github.com/ava-labs
-cd src/github.com/ava-labs
-git clone git@github.com:ava-labs/subnet-evm.git
-cd subnet-evm
+mkdir -p src/github.com/Chaintable
+cd src/github.com/Chaintable
+git clone https://github.com/Chaintable/subnet-evm-kite
+cd subnet-evm-kite
 ```
 
-This will clone and checkout to `master` branch.
+This will clone and checkout to the `main` branch.
 
 ### Run Local Network
 
