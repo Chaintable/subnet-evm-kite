@@ -114,3 +114,5 @@ There are two options when using the Avalanche-CLI:
 ## Releasing
 
 You can refer to the [`docs/releasing/README.md`](docs/releasing/README.md) file for the release process.
+
+<!-- ci verify: hosted runner + main branch build/release test (2026-06-25) -->
