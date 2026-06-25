@@ -21,6 +21,9 @@ Chaintable write node (this repo · producer, embeds pipeline tracer)
 
 # Subnet EVM
 
+[![Releases](https://img.shields.io/github/v/tag/ava-labs/subnet-evm.svg?sort=semver)](https://github.com/ava-labs/subnet-evm/releases)
+[![CI](https://github.com/ava-labs/subnet-evm/actions/workflows/ci.yml/badge.svg)](https://github.com/ava-labs/subnet-evm/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/ava-labs/subnet-evm/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/ava-labs/subnet-evm/actions/workflows/codeql-analysis.yml)
 [![License](https://img.shields.io/github/license/ava-labs/subnet-evm)](https://github.com/ava-labs/subnet-evm/blob/master/LICENSE)
 
 ## Fork Notice
@@ -112,13 +115,13 @@ Download the `subnet-evm` repository into your `$GOPATH`:
 
 ```sh
 cd $GOPATH
-mkdir -p src/github.com/Chaintable
-cd src/github.com/Chaintable
-git clone https://github.com/Chaintable/subnet-evm-kite
-cd subnet-evm-kite
+mkdir -p src/github.com/ava-labs
+cd src/github.com/ava-labs
+git clone git@github.com:ava-labs/subnet-evm.git
+cd subnet-evm
 ```
 
-This will clone and checkout to the `main` branch.
+This will clone and checkout to `master` branch.
 
 ### Run Local Network
 
