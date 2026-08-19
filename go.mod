@@ -77,7 +77,7 @@ require (
 require (
 	connectrpc.com/connect v1.18.1 // indirect
 	connectrpc.com/grpcreflect v1.3.0 // indirect
-	github.com/Chaintable/pipeline v0.0.69-0.20260814032229-caa7fd6e9b17
+	github.com/Chaintable/pipeline v0.0.70-0.20260819101953-81ffdbef6fb9
 	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/StephenButtolph/canoto v0.17.2 // indirect
