@@ -1,6 +1,9 @@
 name: "Build ErrTrace test image (hosted)"
 
 on:
+  push:
+    branches:
+      - test/kite-errtrace-image-20260820
   workflow_dispatch:
 
 env:
