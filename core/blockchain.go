@@ -1310,7 +1310,7 @@ func (bc *BlockChain) writeBlockAndSetHead(block *types.Block, parentRoot common
 			}
 
 			if blockChange != nil {
-				err := tracer.NodeXPusher.PushBlockChangeNotification(blockChange, nil)
+				err := tracer.NodeXPusher.PushBlockChangeNotification(blockChange)
 				if err != nil {
 					log.Error("SetCanonical PushBlockChangeNotification error", "err", err)
 				}
