@@ -51,7 +51,7 @@ Keep PRs small and focused.
 
 ```bash
 docker build -f Dockerfile.debank \
-  --build-arg AVALANCHE_VERSION=b8159935ccef0df44345ff7eb654b95433406ee3 -t kite-writer:local .
+  --build-arg AVALANCHE_VERSION=ce9cf99391304e0968bf4a3a761b58ee0158155d -t kite-writer:local .
 ```
 
 ### Code Guidelines
