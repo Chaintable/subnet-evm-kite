@@ -2,6 +2,11 @@
 
 Thanks for your interest in contributing.
 
+For Kite v1.15.0 and later, writer source changes belong in
+[Chaintable/avalanchego-x-kite](https://github.com/Chaintable/avalanchego-x-kite/tree/debank/graft/subnet-evm).
+This repository maintains image packaging and pins that source commit in both
+build/release workflows. The Go sources here describe the legacy implementation.
+
 This repository is a **fork**: upstream [ava-labs/subnet-evm](https://github.com/ava-labs/subnet-evm)
 plus the [Chaintable pipeline](https://github.com/Chaintable/pipeline) tracer. It
 runs write node(s) that produce block data for the Chaintable data pipeline, for
@@ -19,7 +24,8 @@ a general-purpose fork of ava-labs/subnet-evm.
 
 - **Pipeline layer changes** — the pipeline tracer and its block-data output,
   the Dockerfile, published images, CI workflows, or docs about running this
-  write node — contribute **here**, following the process below.
+  write node — contribute to the source repository above for Go changes, or
+  **here** for image packaging, following the process below.
 
 ---
 
@@ -29,7 +35,7 @@ a general-purpose fork of ava-labs/subnet-evm.
 
 Requirements:
 
-* Go (version per `go.mod`)
+* Docker (for the image packaging workflow)
 
 ### Development Workflow
 
@@ -44,7 +50,8 @@ Keep PRs small and focused.
 ### Local Checks (must pass)
 
 ```bash
-./scripts/build.sh
+docker build -f Dockerfile.debank \
+  --build-arg AVALANCHE_VERSION=ce9cf99391304e0968bf4a3a761b58ee0158155d -t kite-writer:local .
 ```
 
 ### Code Guidelines

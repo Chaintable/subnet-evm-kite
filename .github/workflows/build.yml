@@ -11,7 +11,7 @@ env:
   REGISTRY: public.ecr.aws/b2h7a5c4/chaintable
   IMAGE: kite-writer
   DOCKERFILE: Dockerfile.debank
-  AVALANCHE_VERSION: debank
+  AVALANCHE_VERSION: 70dc25dfa53f34ec8fc5f889f7f4b7a69e103f1c
 
 jobs:
   build-artifacts:
@@ -43,14 +43,9 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Set env (determine image tag + resolve avalanchego commit)
+      - name: Set env (determine image tag)
         run: |
           echo "REVISION=$(git rev-parse --short=9 HEAD)" >> $GITHUB_ENV
-          # Resolve AVALANCHE_VERSION (a branch name) to its current commit SHA, so the
-          # Dockerfile's `git clone && git checkout` layer cache key changes whenever the
-          # avalanchego-x-kite debank branch moves. Without this, Docker reuses the cached
-          # clone and avalanchego changes never make it into the image.
-          echo "AVALANCHE_VERSION=$(git ls-remote https://github.com/Chaintable/avalanchego-x-kite.git ${{ env.AVALANCHE_VERSION }} | cut -f1)" >> $GITHUB_ENV
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4

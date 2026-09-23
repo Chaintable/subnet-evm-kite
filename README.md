@@ -2,6 +2,12 @@
 
 > Fork of [ava-labs/subnet-evm](https://github.com/ava-labs/subnet-evm), with Chaintable pipeline patches.
 
+Kite v1.15.0 moves the maintained host and plugin source to
+[Chaintable/avalanchego-x-kite](https://github.com/Chaintable/avalanchego-x-kite/tree/debank/graft/subnet-evm).
+This repository builds `kite-writer` from the exact source commit pinned in
+`.github/workflows/build.yml` and `release.yml`. The Go sources below are the
+legacy v0.8.0 implementation; see [the migration notes](docs/debank-kite-fork.md).
+
 ## Architecture
 
 This repo runs the chain's execution layer with the [Chaintable pipeline](https://github.com/Chaintable/pipeline) tracer embedded. The tracer extracts block data — block headers, transactions, call traces, receipts, events, and state diffs — and ships it to **S3 + Kafka** (see pipeline's [architecture](https://github.com/Chaintable/pipeline/blob/main/docs/architecture.md)). Two consumption paths:
@@ -33,7 +39,7 @@ This repository is a modified fork of [ava-labs/subnet-evm](https://github.com/a
 - **Upstream:** https://github.com/ava-labs/subnet-evm
 - **Base version:** `v0.8.0`
 - **License:** LGPL-3.0 (inherited from upstream)
-- **Working branch:** `debank` — Chaintable/DeBank patches on top of the upstream base
+- **Working branch:** `main` (image packaging; legacy source below) — Chaintable/DeBank patches on top of the upstream base
 - **Published image:** `public.ecr.aws/b2h7a5c4/chaintable/kite-writer`
 - **Companion source fork:** [Chaintable/avalanchego-x-kite](https://github.com/Chaintable/avalanchego-x-kite) — the avalanchego build context cloned at image-build time; it does not publish a standalone image
 - **Modifications:** data-export / pipeline-integration patches for the DeBank nodex stack (diff the `debank` branch against `v0.8.0` for details)
