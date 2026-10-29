@@ -19,7 +19,7 @@ env:
   REGISTRY: public.ecr.aws/b2h7a5c4/chaintable
   IMAGE: kite-writer
   DOCKERFILE: Dockerfile.debank
-  AVALANCHE_VERSION: 1b30044a0c6e14190add17bd9e96fbe805c0a5d7
+  AVALANCHE_VERSION: 8d7c4b029fede4b6c112861109d146c6f80b72d9
 
 jobs:
   build-artifacts:
